@@ -257,9 +257,9 @@ setInterval(() => {
 }, 20_000);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-server.listen(PORT, () => {
-    console.log(`\n🚀 Trading-Trip  →  http://localhost:${PORT}`);
-    console.log(`🔌 WebSocket     →  ws://localhost:${PORT}/ws`);
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n🚀 Trading-Trip  →  http://0.0.0.0:${PORT}`);
+    console.log(`🔌 WebSocket     →  ws://0.0.0.0:${PORT}/ws`);
     console.log(`🤖 Claude AI     →  ${anthropic ? 'enabled ✓' : 'disabled (set ANTHROPIC_API_KEY)'}\n`);
     refreshPrices().catch(() => {});
 });
