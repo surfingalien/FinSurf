@@ -1,0 +1,61 @@
+{
+  "name": "Trading-Trip Operations",
+  "short_name": "T-TRIP",
+  "description": "Real-time portfolio tracking with AI insights and global connectivity",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#030304",
+  "theme_color": "#030304",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-dark.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Dark mode dashboard"
+    },
+    {
+      "src": "/screenshots/mobile-light.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile portfolio view"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "View Portfolio",
+      "short_name": "Portfolio",
+      "description": "Open portfolio overview",
+      "url": "/?view=portfolio",
+      "icons": [{ "src": "/icons/shortcut-portfolio.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Export Report",
+      "short_name": "Export",
+      "description": "Generate positions report",
+      "url": "/?action=export",
+      "icons": [{ "src": "/icons/shortcut-export.png", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "iarc_rating_id": "",
+  "lang": "en-US"
+}

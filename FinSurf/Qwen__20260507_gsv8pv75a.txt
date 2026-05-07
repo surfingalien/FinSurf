@@ -1,0 +1,3 @@
+GET  /auth/webauthn/challenge?username=USER
+POST /auth/webauthn/verify
+GET  /auth/webauthn/credentials?username=USER

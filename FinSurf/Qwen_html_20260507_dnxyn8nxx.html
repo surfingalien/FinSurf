@@ -1,0 +1,1310 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#030304" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+    <meta name="description" content="Trading-Trip Operations Room - Real-time portfolio tracking with AI insights">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Security Headers (deploy with server config) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' wss://api.trading-trip.dev ws://localhost:8080 https://api.trading-trip.dev; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; worker-src 'self' blob:;">
+    
+    <title>Trading-Trip | Operations Room</title>
+    
+    <!-- Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'marquee': 'marquee 25s linear infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'typing': 'typing 1.5s steps(40, end) infinite'
+                    },
+                    keyframes: {
+                        marquee: { '0%': { transform: 'translateX(0)' }, '100%': { transform: 'translateX(-50%)' } },
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(129, 140, 248, 0.3), 0 0 20px rgba(129, 140, 248, 0.1)' },
+                            '100%': { boxShadow: '0 0 15px rgba(129, 140, 248, 0.6), 0 0 40px rgba(129, 140, 248, 0.2)' }
+                        },
+                        slideUp: { '0%': { transform: 'translateY(100%)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+                        typing: { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.3 } }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            --bg-deep: #030304; --bg-card: rgba(15, 15, 20, 0.65); --bg-elevated: rgba(24, 24, 27, 0.9);
+            --border-subtle: rgba(255, 255, 255, 0.08); --border-accent: rgba(129, 140, 248, 0.3);
+            --text-primary: #f4f4f5; --text-secondary: #a1a1aa; --text-muted: #71717a;
+            --accent-primary: #818cf8; --accent-secondary: #2dd4bf; --accent-success: #34d399;
+            --accent-danger: #f87171; --accent-warning: #fbbf24;
+            --shadow-glass: 0 1px 0 rgba(255,255,255,0.05) inset, 0 8px 32px 0 rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(129, 140, 248, 0.08);
+            --shadow-glass-hover: 0 1px 0 rgba(255,255,255,0.08) inset, 0 12px 48px 0 rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(129, 140, 248, 0.25), 0 0 30px rgba(129, 140, 248, 0.12);
+            --grid-color: rgba(255,255,255,0.03); --grid-glow: rgba(129, 140, 248, 0.08);
+        }
+        html.light {
+            --bg-deep: #fafafa; --bg-card: rgba(255, 255, 255, 0.85); --bg-elevated: rgba(250, 250, 250, 0.95);
+            --border-subtle: rgba(0, 0, 0, 0.08); --border-accent: rgba(99, 102, 241, 0.4);
+            --text-primary: #18181b; --text-secondary: #71717a; --text-muted: #a1a1aa;
+            --accent-primary: #6366f1; --accent-secondary: #14b8a6; --accent-success: #10b981;
+            --accent-danger: #ef4444; --accent-warning: #f59e0b;
+            --shadow-glass: 0 1px 0 rgba(0,0,0,0.03) inset, 0 8px 32px 0 rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(99, 102, 241, 0.1);
+            --shadow-glass-hover: 0 1px 0 rgba(0,0,0,0.05) inset, 0 12px 48px 0 rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(99, 102, 241, 0.35), 0 0 30px rgba(99, 102, 241, 0.15);
+            --grid-color: rgba(0,0,0,0.04); --grid-glow: rgba(99, 102, 241, 0.12);
+        }
+        
+        * { scrollbar-width: thin; scrollbar-color: var(--accent-primary) transparent; transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease; }
+        *::-webkit-scrollbar { width: 6px; height: 6px; }
+        *::-webkit-scrollbar-track { background: transparent; }
+        *::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary)); border-radius: 3px; border: 1px solid var(--bg-deep); }
+        
+        body { font-family: 'Outfit', sans-serif; background: var(--bg-deep); color: var(--text-primary); overflow-x: hidden; min-height: 100vh; }
+        .mono { font-family: 'Fira Code', monospace; font-variant-numeric: tabular-nums; }
+        
+        .glass { background: var(--bg-card); backdrop-filter: blur(24px) saturate(200%) brightness(1.02); border: 1px solid var(--border-subtle); box-shadow: var(--shadow-glass); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass:hover { border-color: var(--border-accent); box-shadow: var(--shadow-glass-hover); }
+        .glass-accent { border-left: 3px solid var(--accent-secondary); }
+        
+        .bg-grid { position: relative; background: radial-gradient(ellipse at top, var(--grid-glow) 0%, transparent 60%), radial-gradient(ellipse at bottom, rgba(45, 212, 191, 0.06) 0%, transparent 60%), repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-color) 40px), repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-color) 40px); background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px; }
+        .bg-grid::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 20% 30%, var(--grid-glow) 0%, transparent 40%), radial-gradient(circle at 80% 70%, rgba(45, 212, 191, 0.1) 0%, transparent 45%); pointer-events: none; animation: float 20s ease-in-out infinite; }
+        
+        .scanline { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 0%, rgba(129, 140, 248, 0.03) 45%, rgba(129, 140, 248, 0.08) 50%, rgba(129, 140, 248, 0.03) 55%, transparent 100%); animation: scan 5s linear infinite; pointer-events: none; opacity: 0.6; }
+        @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+        
+        .pulse-dot { position: relative; }
+        .pulse-dot::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; background: inherit; animation: pulse-slow; opacity: 0.6; }
+        
+        .hover-lift { transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s; }
+        .hover-lift:hover { transform: translateY(-4px); }
+        .hover-glow { transition: all 0.3s ease; }
+        .hover-glow:hover { border-color: var(--accent-primary); box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.4), 0 0 25px rgba(129, 140, 248, 0.2); }
+        
+        .coord-grid { position: absolute; inset: 0; background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px); background-size: 25px 25px; pointer-events: none; opacity: 0.7; }
+        .metric-bar { position: relative; overflow: hidden; }
+        .metric-bar::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent); animation: shimmer 2s infinite; }
+        @keyframes shimmer { 100% { left: 100%; } }
+        
+        .theme-toggle { position: relative; width: 52px; height: 30px; border-radius: 15px; background: var(--bg-elevated); border: 1px solid var(--border-subtle); cursor: pointer; transition: all 0.3s ease; }
+        .theme-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        html.light .theme-toggle::after { transform: translateX(22px); background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+        
+        .mobile-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-elevated); backdrop-filter: blur(20px); border-top: 1px solid var(--border-subtle); padding: 12px 20px 24px; z-index: 100; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .mobile-nav.active { transform: translateY(0); }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; visibility: hidden; transition: all 0.2s ease; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 24px; padding: 24px; max-width: 480px; width: 90%; transform: scale(0.95); transition: transform 0.2s ease; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        
+        .sparkline-container { width: 80px; height: 32px; }
+        
+        /* Portfolio Toggle */
+        .portfolio-toggle { display: flex; background: var(--bg-elevated); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 4px; }
+        .portfolio-toggle button { flex: 1; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; transition: all 0.2s; color: var(--text-secondary); }
+        .portfolio-toggle button.active { background: var(--accent-primary); color: white; box-shadow: 0 2px 8px rgba(129, 140, 248, 0.3); }
+        
+        /* AI Insights Panel */
+        .ai-insights { border: 1px solid var(--border-accent); background: linear-gradient(135deg, rgba(129, 140, 248, 0.08), rgba(45, 212, 191, 0.06)); }
+        .ai-typing::after { content: '▍'; animation: typing 1s steps(1, end) infinite; color: var(--accent-primary); }
+        
+        /* Biometric Auth */
+        .biometric-btn { position: relative; overflow: hidden; }
+        .biometric-btn::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(129, 140, 248, 0.3), transparent 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .biometric-btn:hover::before { opacity: 1; }
+        
+        /* WebSocket Status */
+        .ws-status { display: flex; align-items: center; gap: 6px; font-size: 10px; font-family: 'Fira Code', monospace; }
+        .ws-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-danger); transition: background 0.3s; }
+        .ws-dot.connected { background: var(--accent-success); box-shadow: 0 0 8px var(--accent-success); }
+        .ws-dot.connecting { background: var(--accent-warning); animation: pulse-slow; }
+        
+        /* PWA Install Prompt */
+        .pwa-prompt { position: fixed; bottom: 80px; right: 20px; z-index: 150; animation: slide-up 0.3s ease-out; }
+        
+        @media (max-width: 768px) {
+            .text-responsive-5xl { font-size: 2.5rem; line-height: 1; }
+            .text-responsive-3xl { font-size: 1.75rem; }
+            .hide-mobile { display: none; }
+            .show-mobile { display: flex; }
+        }
+        @media (min-width: 769px) {
+            .hide-desktop { display: none; }
+            .mobile-nav { display: none !important; }
+        }
+        
+        @media print {
+            body { background: white; color: black; }
+            .glass { background: white; border: 1px solid #ddd; box-shadow: none; }
+            .no-print { display: none !important; }
+        }
+        
+        /* Reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
+    </style>
+</head>
+<body class="bg-grid">
+
+    <!-- Live Market Ticker (WebSocket Powered) -->
+    <div class="w-full bg-zinc-950/90 dark:bg-zinc-950/90 light:bg-white/90 border-b border-white/5 dark:border-white/5 light:border-black/5 py-2 overflow-hidden whitespace-nowrap backdrop-blur-sm sticky top-0 z-50">
+        <div id="tickerContent" class="flex animate-marquee gap-10 items-center text-[11px] mono uppercase tracking-wider">
+            <!-- Populated by WebSocket -->
+            <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span> BTC: <span class="text-emerald-400 font-semibold" id="price-btc">$64,102.40</span> <span class="text-emerald-400/80" id="change-btc">+2.1%</span></span>
+            <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span> ETH: <span class="text-emerald-400 font-semibold" id="price-eth">$3,450.88</span> <span class="text-emerald-400/80" id="change-eth">+1.4%</span></span>
+            <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-red-400 pulse-dot"></span> SOL: <span class="text-red-400 font-semibold" id="price-sol">$142.12</span> <span class="text-red-400/80" id="change-sol">-0.8%</span></span>
+            <span class="flex items-center gap-2">NVDA: <span class="text-emerald-400 font-semibold" id="price-nvda">$202.06</span> <span class="text-emerald-400/80" id="change-nvda">+80.3%</span></span>
+            <!-- Duplicates for marquee -->
+            <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span> BTC: <span class="text-emerald-400 font-semibold" id="price-btc-2">$64,102.40</span> <span class="text-emerald-400/80" id="change-btc-2">+2.1%</span></span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="px-6 md:px-10 py-5 flex justify-between items-center border-b border-white/5 dark:border-white/5 light:border-black/5 backdrop-blur-sm bg-zinc-950/30 dark:bg-zinc-950/30 light:bg-white/30 sticky top-[41px] z-40">
+        <div class="flex items-center gap-7">
+            <div class="flex items-center gap-3 group cursor-pointer">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-emerald-500/20 border border-white/10 flex items-center justify-center hover-glow">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                </div>
+                <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">T-TRIP<span class="text-indigo-400/70">_OPS</span></h1>
+            </div>
+            <div class="hidden lg:flex h-5 w-px bg-gradient-to-b from-transparent via-zinc-700 to-transparent"></div>
+            <div class="hidden lg:flex gap-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                <a href="#" class="hover:text-indigo-400 transition-colors relative group">Tactical<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-400 transition-all group-hover:w-full"></span></a>
+                <a href="#" class="hover:text-indigo-400 transition-colors relative group">Manifest<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-400 transition-all group-hover:w-full"></span></a>
+                <a href="#" class="hover:text-indigo-400 transition-colors relative group">Archive<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-400 transition-all group-hover:w-full"></span></a>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <!-- WebSocket Status -->
+            <div class="hidden sm:flex items-center gap-2 ws-status">
+                <span class="ws-dot" id="wsStatus"></span>
+                <span class="text-[10px] mono text-zinc-500" id="wsLabel">Connecting...</span>
+            </div>
+            
+            <!-- Portfolio Toggle (Multi-Portfolio Feature) -->
+            <div class="portfolio-toggle hide-mobile" id="portfolioToggle">
+                <button data-portfolio="personal" class="active">Personal</button>
+                <button data-portfolio="trust">Trust</button>
+                <button data-portfolio="ira">IRA</button>
+            </div>
+            
+            <!-- Theme Toggle -->
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark/light mode" title="Toggle theme"></button>
+            
+            <!-- Biometric Auth Button -->
+            <button id="biometricAuth" class="w-11 h-11 rounded-2xl border border-white/10 flex items-center justify-center glass hover-glow cursor-pointer transition-all active:scale-95 biometric-btn" title="Authenticate with biometrics">
+                <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.5-2.5 5-2.5 5s2.5 1.5 2.5 5M7 21h10M12 3v2m0 14v2M5.3 5.3l1.4 1.4M17.3 5.3l-1.4 1.4M3 12h2m14 0h2"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-[1680px] mx-auto px-6 md:px-10 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 pb-24 md:pb-8">
+        
+        <!-- Left Column -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- Live Terminal (WebSocket Powered) -->
+            <div class="glass rounded-3xl p-6 relative overflow-hidden h-[380px] flex flex-col hover-lift">
+                <div class="scanline"></div>
+                <div class="coord-grid"></div>
+                <div class="flex justify-between items-center mb-5 relative z-10">
+                    <span class="text-xs font-bold mono text-indigo-400 uppercase tracking-wide flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="terminalStatus"></span>
+                        System_Output
+                    </span>
+                    <span class="text-[10px] text-zinc-600 mono bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-2 py-1 rounded">v8.0.2</span>
+                </div>
+                <div id="terminalOutput" class="flex-1 mono text-[11px] text-indigo-300/85 dark:text-indigo-300/85 light:text-indigo-700/85 space-y-2.5 overflow-y-auto relative z-10 pr-2">
+                    <p class="text-zinc-500">[<span class="text-zinc-400">14:23:08</span>] Initializing secure bridge...</p>
+                    <p class="text-zinc-500">[<span class="text-zinc-400">14:23:09</span>] Syncing global portfolio data...</p>
+                    <p class="text-emerald-400">[<span class="text-zinc-400">14:23:11</span>] ✓ Connection established (142ms)</p>
+                    <p class="text-zinc-500">[<span class="text-zinc-400">14:23:12</span>] Tracking <span class="text-white font-semibold">22 positions</span> across 4 nodes...</p>
+                    <p class="text-zinc-500">[<span class="text-zinc-400">14:23:13</span>] Risk assessment: <span class="text-emerald-400 font-semibold">STABLE</span></p>
+                </div>
+                <div class="mt-4 pt-4 border-t border-white/5 relative z-10">
+                    <div class="flex items-center gap-3">
+                        <span class="text-indigo-400 mono text-xs">></span>
+                        <input type="text" id="terminalInput" placeholder="Execute command..." class="flex-1 bg-transparent mono text-xs outline-none text-white dark:text-white light:text-zinc-900 placeholder-zinc-600 focus:placeholder-transparent transition-all">
+                        <button id="terminalRun" class="text-[10px] mono text-zinc-500 hover:text-indigo-400 transition-colors uppercase tracking-wide">Run</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Pulse -->
+            <div class="glass glass-accent rounded-3xl p-6 hover-lift">
+                <div class="flex justify-between items-start mb-5">
+                    <h3 class="text-xs font-bold uppercase tracking-tighter text-zinc-500 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Portfolio Pulse
+                    </h3>
+                    <span class="text-[10px] mono text-zinc-600 bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-2 py-1 rounded">LIVE</span>
+                </div>
+                
+                <div class="space-y-5">
+                    <div>
+                        <p class="text-[10px] uppercase text-zinc-500 tracking-wider mb-1">Total Value</p>
+                        <div class="flex items-baseline gap-3">
+                            <span class="text-3xl md:text-4xl font-black tracking-tight" id="portfolioValue">$69,148</span>
+                            <span class="text-emerald-400 text-sm font-bold flex items-center gap-1" id="portfolioChange">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                                +31.88%
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-zinc-900/40 dark:bg-zinc-900/40 light:bg-zinc-100/60 rounded-2xl p-4">
+                            <p class="text-[10px] text-zinc-500 uppercase mb-1">Today's P&L</p>
+                            <p class="text-lg font-bold text-red-400" id="todayPnl">-$221</p>
+                            <p class="text-[10px] text-zinc-600">-0.46% of cost</p>
+                        </div>
+                        <div class="bg-zinc-900/40 dark:bg-zinc-900/40 light:bg-zinc-100/60 rounded-2xl p-4">
+                            <p class="text-[10px] text-zinc-500 uppercase mb-1">Cash Reserve</p>
+                            <p class="text-lg font-bold text-white dark:text-white light:text-zinc-900" id="cashReserve">$5,050</p>
+                            <p class="text-[10px] text-zinc-600">7.3% allocation</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-[10px] text-zinc-500 mb-2">
+                            <span>Portfolio Health</span>
+                            <span class="text-emerald-400 font-semibold" id="healthScore">87/100</span>
+                        </div>
+                        <div class="w-full h-2 bg-zinc-900 dark:bg-zinc-900 light:bg-zinc-200 rounded-full overflow-hidden metric-bar">
+                            <div class="h-full w-[87%] bg-gradient-to-r from-indigo-500 via-emerald-400 to-emerald-500 rounded-full" id="healthBar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Insights Panel (NEW FEATURE) -->
+            <div class="glass ai-insights rounded-3xl p-6 hover-lift">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-xs font-bold uppercase text-indigo-400 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                        AI Insights
+                    </h4>
+                    <span class="text-[10px] mono text-zinc-600 flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Active
+                    </span>
+                </div>
+                
+                <div id="aiContent" class="space-y-3">
+                    <p class="text-sm text-zinc-300 leading-relaxed">
+                        <span class="text-indigo-400 font-semibold">Market Alert:</span> Tech sector showing strong momentum. NVDA and TSM positions align with upward trend.
+                    </p>
+                    <p class="text-sm text-zinc-300 leading-relaxed">
+                        <span class="text-amber-400 font-semibold">Risk Note:</span> COIN volatility increased 23% in last 4h. Consider stop-loss adjustment.
+                    </p>
+                    <p class="text-sm text-zinc-400 italic ai-typing" id="aiTyping">Analyzing cross-asset correlations...</p>
+                </div>
+                
+                <button id="refreshAI" class="mt-4 w-full py-2.5 rounded-xl border border-indigo-400/30 text-indigo-400 text-sm font-medium hover:bg-indigo-500/10 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Refresh Analysis
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="lg:col-span-8 space-y-6 md:space-y-8">
+            
+            <!-- Top Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Geo-Financial Sync -->
+                <div class="glass rounded-3xl p-7 relative overflow-hidden group hover-lift">
+                    <div class="coord-grid opacity-40"></div>
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-gradient-to-br from-indigo-500/10 to-emerald-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-5">
+                            <div class="w-12 h-12 bg-indigo-500/15 rounded-2xl flex items-center justify-center border border-indigo-500/20">
+                                <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            </div>
+                            <span class="text-[10px] mono text-zinc-500 uppercase bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-2.5 py-1 rounded">AUTO-SYNC</span>
+                        </div>
+                        
+                        <h2 class="text-xl font-bold mb-2">Geo-Financial Sync</h2>
+                        <p class="text-zinc-400 text-sm leading-relaxed">Automated trades triggered by timezone volatility patterns and regional news sentiment analysis.</p>
+                        
+                        <div class="mt-6 flex flex-wrap gap-2">
+                            <span class="text-[10px] mono text-zinc-500 bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-3 py-1.5 rounded-full">NYC</span>
+                            <span class="text-[10px] mono text-zinc-500 bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-3 py-1.5 rounded-full">LON</span>
+                            <span class="text-[10px] mono text-zinc-500 bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-3 py-1.5 rounded-full">TKY</span>
+                            <span class="text-[10px] mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">ACTIVE</span>
+                        </div>
+                        
+                        <button class="mt-6 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl font-semibold text-sm w-fit hover:from-indigo-400 hover:to-indigo-500 transition-all hover:shadow-lg hover:shadow-indigo-500/25 active:scale-95">
+                            Configure Nodes →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Media Log -->
+                <div class="glass rounded-3xl p-7 flex flex-col justify-between hover-glow transition-all hover-lift">
+                    <div class="flex justify-between items-start">
+                        <div class="w-12 h-12 bg-emerald-500/15 rounded-2xl flex items-center justify-center border border-emerald-500/20">
+                            <svg class="text-emerald-400" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        </div>
+                        <span class="text-[10px] mono text-zinc-500 uppercase flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Live Feed
+                        </span>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="font-bold text-lg">Trip Visualizer</h4>
+                        <p class="text-zinc-400 text-sm mt-2 leading-relaxed">Real-time overlay of profit margins onto travel itineraries with predictive routing suggestions.</p>
+                    </div>
+                    
+                    <div class="mt-6 pt-5 border-t border-white/5">
+                        <div class="flex items-center justify-between text-[11px] mono">
+                            <span class="text-zinc-500">Last update</span>
+                            <span class="text-emerald-400">14:22:41 UTC</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wide Stats Panel -->
+            <div class="glass rounded-3xl p-7 md:p-9 flex flex-col md:flex-row gap-8 md:gap-12 items-center hover-lift">
+                <div class="text-center md:text-left min-w-[140px]">
+                    <p class="text-[10px] uppercase font-bold text-indigo-400 tracking-[0.15em] mb-2">Global Reach</p>
+                    <p class="text-4xl md:text-5xl font-black tracking-tight">14.2<span class="text-indigo-600/60">k</span></p>
+                    <p class="text-zinc-500 text-[11px] mt-2 uppercase tracking-wide">Trades Per Expedition</p>
+                </div>
+                <div class="hidden md:block h-16 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
+                <div class="text-center md:text-left min-w-[140px]">
+                    <p class="text-[10px] uppercase font-bold text-emerald-400 tracking-[0.15em] mb-2">Network Status</p>
+                    <p class="text-4xl md:text-5xl font-black tracking-tight">99.9<span class="text-emerald-600/60">%</span></p>
+                    <p class="text-zinc-500 text-[11px] mt-2 uppercase tracking-wide">Uptime Reliability</p>
+                </div>
+                <div class="hidden md:block h-16 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
+                <div class="flex-1 text-center md:text-left">
+                    <p class="text-zinc-300 text-sm italic leading-relaxed">"The goal isn't just to trade; it's to build a life that markets pay for."</p>
+                    <p class="text-[10px] text-zinc-600 mt-2 mono">— Trading-Trip Philosophy</p>
+                </div>
+            </div>
+
+            <!-- Positions Table with Sparklines -->
+            <div class="glass rounded-3xl p-6 md:p-8 hover-lift">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <h3 class="text-lg font-bold flex items-center gap-3">
+                        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        Active Positions
+                    </h3>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[11px] mono text-zinc-500"><span id="positionCount">22</span> holdings</span>
+                        <button id="exportBtn" class="text-[11px] mono text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wide flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-[10px] uppercase text-zinc-500 tracking-wider border-b border-white/5">
+                                <th class="pb-4 font-semibold">Asset</th>
+                                <th class="pb-4 font-semibold text-right">Qty</th>
+                                <th class="pb-4 font-semibold text-right">Avg Cost</th>
+                                <th class="pb-4 font-semibold text-right">Live Price</th>
+                                <th class="pb-4 font-semibold text-right">Value</th>
+                                <th class="pb-4 font-semibold text-right">Today</th>
+                                <th class="pb-4 font-semibold text-right">7D Trend</th>
+                                <th class="pb-4 font-semibold text-center">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="positionsTable">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 pt-5 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px] text-zinc-500">
+                    <p>Showing top 4 of <span id="totalPositions">22</span> positions • <button class="text-indigo-400 hover:text-indigo-300 transition-colors">Expand view</button></p>
+                    <p class="mono">Last sync: <span class="text-zinc-300" id="lastSync">14:23:18 UTC</span></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="px-6 md:px-10 py-8 mt-8 border-t border-white/5">
+        <div class="max-w-[1680px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-[10px] mono text-zinc-600 uppercase tracking-[0.3em]">Trading-Trip // Decentralized Experience Protocol</p>
+            <div class="flex items-center gap-6 text-[10px] mono text-zinc-600">
+                <span class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
+                    Systems Operational
+                </span>
+                <span>© 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav show-mobile" id="mobileNav">
+        <div class="max-w-lg mx-auto flex justify-around items-center">
+            <a href="#" class="flex flex-col items-center gap-1 text-indigo-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span class="text-[10px] font-medium">Home</span>
+            </a>
+            <a href="#" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-indigo-400 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <span class="text-[10px] font-medium">Portfolio</span>
+            </a>
+            <button id="mobileExportBtn" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-indigo-400 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span class="text-[10px] font-medium">Export</span>
+            </button>
+            <button id="mobileAuthBtn" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-indigo-400 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.5-2.5 5-2.5 5s2.5 1.5 2.5 5M7 21h10M12 3v2m0 14v2M5.3 5.3l1.4 1.4M17.3 5.3l-1.4 1.4M3 12h2m14 0h2"/></svg>
+                <span class="text-[10px] font-medium">Auth</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-content glass">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold">Export Positions Report</h3>
+                <button id="closeModal" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[11px] uppercase text-zinc-500 tracking-wide mb-2">Export Format</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="export-format active p-4 rounded-xl border-2 border-indigo-400 bg-indigo-500/10 text-left hover:bg-indigo-500/20 transition-colors" data-format="pdf">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center"><span class="text-red-400 font-bold text-xs">PDF</span></div>
+                                <div><p class="font-semibold text-sm">PDF Report</p><p class="text-[10px] text-zinc-500">Printable format</p></div>
+                            </div>
+                        </button>
+                        <button class="export-format p-4 rounded-xl border-2 border-transparent bg-zinc-900/30 text-left hover:border-zinc-600 transition-colors" data-format="csv">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center"><span class="text-emerald-400 font-bold text-xs">CSV</span></div>
+                                <div><p class="font-semibold text-sm">CSV Data</p><p class="text-[10px] text-zinc-500">For spreadsheets</p></div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-[11px] uppercase text-zinc-500 tracking-wide mb-2">Portfolio</label>
+                    <select id="exportPortfolio" class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-400 transition-colors">
+                        <option value="personal">Personal</option>
+                        <option value="trust">Trust</option>
+                        <option value="ira">IRA</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                    <svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <p class="text-[11px] text-zinc-400">Export includes all positions with current valuations, P&L, and performance metrics.</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button id="cancelExport" class="flex-1 py-3 rounded-xl border border-white/10 font-semibold hover:bg-white/5 transition-colors">Cancel</button>
+                <button id="confirmExport" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold hover:from-indigo-400 hover:to-indigo-500 transition-all">Generate Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biometric Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-content glass">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold">Biometric Authentication</h3>
+                <button id="closeAuth" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-5">
+                <div class="text-center py-6">
+                    <div class="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-indigo-500/20 to-emerald-500/20 border border-indigo-500/30 flex items-center justify-center mb-4">
+                        <svg class="w-10 h-10 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 11c0 3.5-2.5 5-2.5 5s2.5 1.5 2.5 5M7 21h10M12 3v2m0 14v2M5.3 5.3l1.4 1.4M17.3 5.3l-1.4 1.4M3 12h2m14 0h2"/></svg>
+                    </div>
+                    <p class="text-zinc-300">Use your device's biometric sensor to authenticate securely.</p>
+                </div>
+                
+                <div class="space-y-3">
+                    <button id="authWithFace" class="w-full py-3 rounded-xl border border-white/10 font-medium hover:bg-white/5 transition-colors flex items-center justify-center gap-3">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Authenticate with Face ID
+                    </button>
+                    <button id="authWithFingerprint" class="w-full py-3 rounded-xl border border-white/10 font-medium hover:bg-white/5 transition-colors flex items-center justify-center gap-3">
+                        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.5-2.5 5-2.5 5s2.5 1.5 2.5 5M7 21h10M12 3v2m0 14v2M5.3 5.3l1.4 1.4M17.3 5.3l-1.4 1.4M3 12h2m14 0h2"/></svg>
+                        Authenticate with Fingerprint
+                    </button>
+                </div>
+                
+                <p class="text-[10px] text-zinc-500 text-center">
+                    Your biometric data never leaves your device. Authentication uses WebAuthn standard.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PWA Install Prompt -->
+    <div class="pwa-prompt glass rounded-2xl p-4 flex items-center gap-4 hide-desktop" id="pwaPrompt" style="display: none;">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500/20 to-emerald-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium">Install Trading-Trip</p>
+            <p class="text-[11px] text-zinc-400">Add to home screen for offline access</p>
+        </div>
+        <button id="installPWA" class="px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-400 transition-colors">Install</button>
+        <button id="dismissPWA" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+    </div>
+
+    <!-- Floating Particles -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div class="absolute top-1/4 left-1/4 w-1 h-1 bg-indigo-400/30 rounded-full animate-float" style="animation-delay: 0s"></div>
+        <div class="absolute top-3/4 left-1/3 w-1.5 h-1.5 bg-emerald-400/25 rounded-full animate-float" style="animation-delay: -2s"></div>
+        <div class="absolute top-1/2 right-1/4 w-1 h-1 bg-indigo-400/20 rounded-full animate-float" style="animation-delay: -4s"></div>
+    </div>
+
+    <!-- Load helper scripts -->
+    <script src="webauthn.js"></script>
+    
+    <script>
+        // ==================== GLOBAL STATE ====================
+        const state = {
+            theme: localStorage.getItem('tt-theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+            portfolio: 'personal',
+            ws: null,
+            wsReconnectAttempts: 0,
+            maxReconnectAttempts: 5,
+            positions: {
+                personal: [
+                    { asset: 'NVDA', name: 'NVIDIA Corp', qty: 50, avgCost: 112.07, price: 202.06, value: 10103, today: '+0.18%', totalGL: '+$4,500', rating: 'Strong Buy', sparkline: [112, 125, 138, 155, 172, 185, 198, 202], trend: 'up' },
+                    { asset: 'TSM', name: 'TSMC', qty: 20, avgCost: 180.51, price: 366.24, value: 7325, today: '-1.15%', totalGL: '+$3,715', rating: 'Strong Buy', sparkline: [180, 195, 210, 245, 280, 320, 345, 366], trend: 'up' },
+                    { asset: 'TSLA', name: 'Tesla Inc', qty: 15, avgCost: 216.75, price: 392.50, value: 5888, today: '-2.03%', totalGL: '+$2,636', rating: 'Hold', sparkline: [216, 225, 240, 265, 310, 355, 380, 392], trend: 'up' },
+                    { asset: 'COIN', name: 'Coinbase', qty: 15, avgCost: 257.11, price: 211.63, value: 3174, today: '+2.56%', totalGL: '-$682', rating: 'Review', sparkline: [257, 245, 230, 215, 205, 198, 208, 211], trend: 'down' }
+                ],
+                trust: [
+                    { asset: 'SPY', name: 'S&P 500 ETF', qty: 100, avgCost: 420.50, price: 512.30, value: 51230, today: '+0.45%', totalGL: '+$9,180', rating: 'Strong Buy', sparkline: [420, 435, 455, 475, 490, 500, 508, 512], trend: 'up' },
+                    { asset: 'QQQ', name: 'Nasdaq-100 ETF', qty: 75, avgCost: 350.20, price: 445.80, value: 33435, today: '+0.82%', totalGL: '+$7,170', rating: 'Buy', sparkline: [350, 365, 385, 405, 420, 430, 440, 445], trend: 'up' }
+                ],
+                ira: [
+                    { asset: 'VTI', name: 'Total Stock Market', qty: 200, avgCost: 210.40, price: 248.90, value: 49780, today: '+0.33%', totalGL: '+$7,700', rating: 'Strong Buy', sparkline: [210, 218, 228, 235, 240, 244, 247, 248], trend: 'up' },
+                    { asset: 'BND', name: 'Total Bond Market', qty: 150, avgCost: 75.20, price: 73.45, value: 11017, today: '-0.12%', totalGL: '-$262', rating: 'Hold', sparkline: [75, 74.8, 74.5, 74.2, 73.9, 73.7, 73.5, 73.45], trend: 'down' }
+                ]
+            },
+            charts: {}
+        };
+
+        // ==================== THEME MANAGEMENT ====================
+        const html = document.documentElement;
+        const themeToggle = document.getElementById('themeToggle');
+        
+        function applyTheme(theme) {
+            html.classList.toggle('dark', theme === 'dark');
+            html.classList.toggle('light', theme === 'light');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', theme === 'dark' ? '#030304' : '#fafafa');
+            renderSparklines();
+        }
+        
+        applyTheme(state.theme);
+        
+        themeToggle.addEventListener('click', () => {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('tt-theme', state.theme);
+            applyTheme(state.theme);
+        });
+
+        // ==================== WEBSOCKET LIVE UPDATES ====================
+        const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + (location.hostname === 'localhost' ? 'localhost:8080' : 'api.trading-trip.dev/ws');
+        const wsStatus = document.getElementById('wsStatus');
+        const wsLabel = document.getElementById('wsLabel');
+        const terminalStatus = document.getElementById('terminalStatus');
+        const terminalOutput = document.getElementById('terminalOutput');
+        
+        function connectWebSocket() {
+            state.ws = new WebSocket(WS_URL);
+            
+            state.ws.onopen = () => {
+                wsStatus.className = 'ws-dot connected';
+                wsLabel.textContent = 'Connected';
+                terminalStatus.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                logToTerminal('✓ WebSocket connected', 'emerald');
+                state.wsReconnectAttempts = 0;
+                
+                // Subscribe to portfolio updates
+                state.ws.send(JSON.stringify({ type: 'subscribe', portfolio: state.portfolio }));
+            };
+            
+            state.ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                } catch (e) {
+                    console.error('WebSocket parse error:', e);
+                }
+            };
+            
+            state.ws.onclose = () => {
+                wsStatus.className = 'ws-dot';
+                wsLabel.textContent = 'Disconnected';
+                terminalStatus.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+                logToTerminal('⚠ Connection lost. Reconnecting...', 'amber');
+                
+                // Auto-reconnect with exponential backoff
+                if (state.wsReconnectAttempts < state.maxReconnectAttempts) {
+                    const delay = Math.min(1000 * Math.pow(2, state.wsReconnectAttempts), 10000);
+                    setTimeout(connectWebSocket, delay);
+                    state.wsReconnectAttempts++;
+                    wsLabel.textContent = `Reconnecting (${state.wsReconnectAttempts}/${state.maxReconnectAttempts})...`;
+                }
+            };
+            
+            state.ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                logToTerminal('✗ WebSocket error', 'red');
+            };
+        }
+        
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'price_update':
+                    updateTickerPrice(data.symbol, data.price, data.change);
+                    break;
+                case 'portfolio_update':
+                    updatePortfolioMetrics(data.metrics);
+                    break;
+                case 'terminal_log':
+                    logToTerminal(data.message, data.level || 'info');
+                    break;
+                case 'ai_insight':
+                    updateAIInsights(data.insights);
+                    break;
+                case 'positions_update':
+                    renderPositionsTable(state.portfolio);
+                    break;
+            }
+        }
+        
+        function updateTickerPrice(symbol, price, change) {
+            const priceEl = document.getElementById(`price-${symbol.toLowerCase()}`);
+            const changeEl = document.getElementById(`change-${symbol.toLowerCase()}`);
+            const priceEl2 = document.getElementById(`price-${symbol.toLowerCase()}-2`);
+            const changeEl2 = document.getElementById(`change-${symbol.toLowerCase()}-2`);
+            
+            if (priceEl) {
+                priceEl.textContent = `$${price.toLocaleString()}`;
+                priceEl.className = `font-semibold ${change >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+            if (changeEl) {
+                changeEl.textContent = `${change >= 0 ? '+' : ''}${change}%`;
+                changeEl.className = change >= 0 ? 'text-emerald-400/80' : 'text-red-400/80';
+            }
+            // Update duplicate elements for marquee
+            if (priceEl2) priceEl2.textContent = priceEl?.textContent;
+            if (changeEl2) changeEl2.textContent = changeEl?.textContent;
+        }
+        
+        function updatePortfolioMetrics(metrics) {
+            if (metrics.totalValue) {
+                document.getElementById('portfolioValue').textContent = `$${metrics.totalValue.toLocaleString()}`;
+            }
+            if (metrics.change) {
+                const changeEl = document.getElementById('portfolioChange');
+                changeEl.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg> ${metrics.change >= 0 ? '+' : ''}${metrics.change}%`;
+                changeEl.className = `text-sm font-bold flex items-center gap-1 ${metrics.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+            if (metrics.todayPnl) {
+                const pnlEl = document.getElementById('todayPnl');
+                pnlEl.textContent = `${metrics.todayPnl >= 0 ? '+' : ''}$${Math.abs(metrics.todayPnl)}`;
+                pnlEl.className = `text-lg font-bold ${metrics.todayPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+            }
+            if (metrics.healthScore !== undefined) {
+                document.getElementById('healthScore').textContent = `${metrics.healthScore}/100`;
+                document.getElementById('healthBar').style.width = `${metrics.healthScore}%`;
+            }
+        }
+        
+        function logToTerminal(message, level = 'info') {
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const colors = { info: 'text-zinc-500', success: 'text-emerald-400', warning: 'text-amber-400', error: 'text-red-400' };
+            
+            const p = document.createElement('p');
+            p.className = `${colors[level] || colors.info} mono text-[11px]`;
+            p.innerHTML = `[<span class="text-zinc-400">${time}</span>] ${message}`;
+            terminalOutput.appendChild(p);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+            
+            // Limit terminal lines
+            while (terminalOutput.children.length > 50) {
+                terminalOutput.removeChild(terminalOutput.firstChild);
+            }
+        }
+        
+        // Initialize WebSocket
+        if ('WebSocket' in window) {
+            connectWebSocket();
+        } else {
+            wsLabel.textContent = 'Not Supported';
+            wsStatus.className = 'ws-dot';
+            logToTerminal('⚠ WebSocket not supported in this browser', 'warning');
+        }
+
+        // ==================== MULTI-PORTFOLIO TOGGLE ====================
+        const portfolioToggle = document.getElementById('portfolioToggle');
+        
+        portfolioToggle?.addEventListener('click', (e) => {
+            if (e.target.dataset.portfolio) {
+                // Update active state
+                portfolioToggle.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                // Update state and UI
+                state.portfolio = e.target.dataset.portfolio;
+                renderPositionsTable(state.portfolio);
+                
+                // Notify WebSocket
+                if (state.ws?.readyState === WebSocket.OPEN) {
+                    state.ws.send(JSON.stringify({ type: 'subscribe', portfolio: state.portfolio }));
+                }
+                
+                // Update export modal
+                document.getElementById('exportPortfolio').value = state.portfolio;
+                
+                showToast(`Switched to ${e.target.textContent} portfolio`);
+            }
+        });
+        
+        function renderPositionsTable(portfolio) {
+            const tbody = document.getElementById('positionsTable');
+            const positions = state.positions[portfolio] || [];
+            
+            tbody.innerHTML = positions.map(pos => `
+                <tr class="border-b border-white/3 hover:bg-white/3 transition-colors">
+                    <td class="py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-${pos.trend === 'up' ? 'emerald' : 'rose'}-500/20 to-${pos.trend === 'up' ? 'cyan' : 'pink'}-500/20 border border-${pos.trend === 'up' ? 'emerald' : 'rose'}-500/20 flex items-center justify-center text-xs font-bold text-${pos.trend === 'up' ? 'emerald' : 'rose'}-400">
+                                ${pos.asset.slice(0, 2)}
+                            </div>
+                            <div>
+                                <p class="font-semibold">${pos.asset}</p>
+                                <p class="text-[10px] text-zinc-500">${pos.name}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4 text-right mono">${pos.qty}</td>
+                    <td class="py-4 text-right mono text-zinc-400">$${pos.avgCost}</td>
+                    <td class="py-4 text-right mono font-semibold">$${pos.price}</td>
+                    <td class="py-4 text-right mono font-semibold">$${pos.value.toLocaleString()}</td>
+                    <td class="py-4 text-right mono ${pos.today.startsWith('+') ? 'text-emerald-400' : 'text-red-400'}">${pos.today}</td>
+                    <td class="py-4 text-right"><canvas id="spark-${pos.asset.toLowerCase()}" class="sparkline-container"></canvas></td>
+                    <td class="py-4 text-center">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${getRatingStyles(pos.rating)}">
+                            ${pos.rating === 'Review' ? '<span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>' : (pos.rating === 'Strong Buy' ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>' : '')}
+                            ${pos.rating}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Update counts
+            document.getElementById('positionCount').textContent = positions.length;
+            document.getElementById('totalPositions').textContent = positions.length;
+            
+            // Render sparklines after DOM update
+            setTimeout(() => positions.forEach(pos => {
+                createSparkline(`spark-${pos.asset.toLowerCase()}`, pos.sparkline, pos.trend === 'up');
+            }), 100);
+        }
+        
+        function getRatingStyles(rating) {
+            const styles = {
+                'Strong Buy': 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20',
+                'Buy': 'bg-emerald-500/5 text-emerald-400/90 border border-emerald-500/10',
+                'Hold': 'bg-zinc-700/30 text-zinc-300 border border-zinc-600/30',
+                'Review': 'bg-red-500/10 text-red-400 border border-red-500/20'
+            };
+            return styles[rating] || styles.Hold;
+        }
+        
+        // Initial render
+        renderPositionsTable(state.portfolio);
+
+        // ==================== CHART.JS SPARKLINES ====================
+        function getChartColors() {
+            const isDark = html.classList.contains('dark');
+            return {
+                grid: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                text: isDark ? '#a1a1aa' : '#71717a',
+                line: isDark ? '#818cf8' : '#6366f1',
+                fill: isDark ? 'rgba(129, 140, 248, 0.1)' : 'rgba(99, 102, 241, 0.1)',
+                up: isDark ? '#34d399' : '#10b981',
+                down: isDark ? '#f87171' : '#ef4444'
+            };
+        }
+        
+        function createSparkline(canvasId, data, isPositive) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const colors = getChartColors();
+            
+            if (state.charts[canvasId]) state.charts[canvasId].destroy();
+            
+            state.charts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                 {
+                    labels: data.map((_, i) => i),
+                    datasets: [{
+                         data,
+                        borderColor: isPositive ? colors.up : colors.down,
+                        backgroundColor: isPositive ? 
+                            `rgba(${isPositive ? '52, 211, 153' : '248, 113, 113'}, 0.1)` : 
+                            'rgba(248, 113, 113, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { display: false, grid: { display: false } },
+                        y: { display: false, grid: { display: false, color: colors.grid }, min: Math.min(...data) * 0.95, max: Math.max(...data) * 1.05 }
+                    },
+                    interaction: { mode: 'none' }
+                }
+            });
+        }
+        
+        function renderSparklines() {
+            const positions = state.positions[state.portfolio] || [];
+            positions.forEach(pos => {
+                const canvasId = `spark-${pos.asset.toLowerCase()}`;
+                if (document.getElementById(canvasId)) {
+                    createSparkline(canvasId, pos.sparkline, pos.trend === 'up');
+                }
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSparklines();
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(renderSparklines, 150);
+            });
+        });
+
+        // ==================== AI INSIGHTS PANEL ====================
+        const aiContent = document.getElementById('aiContent');
+        const aiTyping = document.getElementById('aiTyping');
+        const refreshAI = document.getElementById('refreshAI');
+        
+        async function fetchAIInsights() {
+            aiTyping.textContent = 'Analyzing market conditions...';
+            aiTyping.classList.add('ai-typing');
+            
+            try {
+                // Mock API call - replace with real endpoint
+                // const response = await fetch('https://api.trading-trip.dev/ai/insights', {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify({ portfolio: state.portfolio, positions: state.positions[state.portfolio] })
+                // });
+                // const data = await response.json();
+                
+                // Simulated response
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                const mockInsights = [
+                    { type: 'alert', severity: 'info', text: `Tech sector momentum strong. ${state.portfolio === 'personal' ? 'NVDA/TSM' : 'SPY/QQQ'} positions well-positioned for continued upside.` },
+                    { type: 'risk', severity: 'warning', text: state.portfolio === 'personal' ? 'COIN volatility increased 23% in last 4h. Consider stop-loss at $195.' : 'Bond allocation underweight vs. target. Consider rebalancing.' },
+                    { type: 'opportunity', severity: 'success', text: 'Cross-asset correlation analysis suggests diversification opportunity in emerging markets ETF (VWO).' }
+                ];
+                
+                updateAIInsights(mockInsights);
+                
+            } catch (error) {
+                console.error('AI insights fetch error:', error);
+                aiTyping.textContent = '⚠ Analysis unavailable. Retrying...';
+                setTimeout(fetchAIInsights, 5000);
+            } finally {
+                aiTyping.classList.remove('ai-typing');
+            }
+        }
+        
+        function updateAIInsights(insights) {
+            const colors = { info: 'text-indigo-400', warning: 'text-amber-400', success: 'text-emerald-400' };
+            const icons = { info: '💡', warning: '⚠️', success: '✨' };
+            
+            aiContent.innerHTML = insights.map(insight => `
+                <p class="text-sm text-zinc-300 leading-relaxed">
+                    <span class="font-semibold ${colors[insight.severity]}">${icons[insight.severity]} ${insight.type === 'alert' ? 'Market Alert' : insight.type === 'risk' ? 'Risk Note' : 'Opportunity'}:</span> ${insight.text}
+                </p>
+            `).join('') + `<p class="text-sm text-zinc-400 italic" id="aiTyping">Next analysis in 5m...</p>`;
+        }
+        
+        refreshAI?.addEventListener('click', fetchAIInsights);
+        
+        // Initial AI insights load
+        setTimeout(fetchAIInsights, 2000);
+
+        // ==================== BIOMETRIC AUTH (WebAuthn) ====================
+        const biometricAuth = document.getElementById('biometricAuth');
+        const mobileAuthBtn = document.getElementById('mobileAuthBtn');
+        const authModal = document.getElementById('authModal');
+        const closeAuth = document.getElementById('closeAuth');
+        const authWithFace = document.getElementById('authWithFace');
+        const authWithFingerprint = document.getElementById('authWithFingerprint');
+        
+        function openAuthModal() {
+            authModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeAuthModal() {
+            authModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        [biometricAuth, mobileAuthBtn].forEach(btn => btn?.addEventListener('click', openAuthModal));
+        [closeAuth].forEach(btn => btn?.addEventListener('click', closeAuthModal));
+        authModal?.addEventListener('click', (e) => { if (e.target === authModal) closeAuthModal(); });
+        
+        // WebAuthn authentication flow
+        async function authenticateWithBiometrics(type) {
+            try {
+                // Check if WebAuthn is supported
+                if (!window.PublicKeyCredential) {
+                    showToast('Biometric authentication not supported on this device');
+                    return;
+                }
+                
+                // Show loading state
+                const btn = type === 'face' ? authWithFace : authWithFingerprint;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="animate-pulse">Authenticating...</span>';
+                btn.disabled = true;
+                
+                // Mock WebAuthn flow (replace with real implementation)
+                // In production, you'd:
+                // 1. Fetch challenge from your backend: GET /auth/webauthn/challenge
+                // 2. Call navigator.credentials.get() with the challenge
+                // 3. Send assertion to backend: POST /auth/webauthn/verify
+                
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Simulate successful auth
+                closeAuthModal();
+                showToast('✓ Authentication successful');
+                
+                // Update UI state
+                biometricAuth.innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>';
+                biometricAuth.title = 'Authenticated';
+                
+                // In real app: store auth token, enable protected features, etc.
+                
+            } catch (error) {
+                console.error('Biometric auth error:', error);
+                showToast('✗ Authentication failed. Try again.');
+            } finally {
+                // Restore button state
+                const btn = type === 'face' ? authWithFace : authWithFingerprint;
+                btn.innerHTML = btn.dataset.original || btn.innerHTML;
+                btn.disabled = false;
+            }
+        }
+        
+        authWithFace?.addEventListener('click', () => authenticateWithBiometrics('face'));
+        authWithFingerprint?.addEventListener('click', () => authenticateWithBiometrics('fingerprint'));
+        
+        // Store original button HTML for restoration
+        [authWithFace, authWithFingerprint].forEach(btn => {
+            if (btn) btn.dataset.original = btn.innerHTML;
+        });
+
+        // ==================== PWA INSTALLATION ====================
+        let deferredPrompt;
+        const pwaPrompt = document.getElementById('pwaPrompt');
+        const installPWA = document.getElementById('installPWA');
+        const dismissPWA = document.getElementById('dismissPWA');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            pwaPrompt.style.display = 'flex';
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            pwaPrompt.style.display = 'none';
+            deferredPrompt = null;
+            showToast('✓ Trading-Trip installed!');
+        });
+        
+        installPWA?.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                pwaPrompt.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+        
+        dismissPWA?.addEventListener('click', () => {
+            pwaPrompt.style.display = 'none';
+            // Optionally store dismissal in localStorage to not show again
+            localStorage.setItem('pwa-prompt-dismissed', 'true');
+        });
+        
+        // Check if already installed or prompt dismissed
+        if (window.matchMedia('(display-mode: standalone)').matches || localStorage.getItem('pwa-prompt-dismissed') === 'true') {
+            pwaPrompt.style.display = 'none';
+        }
+
+        // ==================== EXPORT FUNCTIONALITY ====================
+        const exportBtn = document.getElementById('exportBtn');
+        const mobileExportBtn = document.getElementById('mobileExportBtn');
+        const exportModal = document.getElementById('exportModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelExport = document.getElementById('cancelExport');
+        const confirmExport = document.getElementById('confirmExport');
+        const formatButtons = document.querySelectorAll('.export-format');
+        const exportPortfolio = document.getElementById('exportPortfolio');
+        
+        let selectedFormat = 'pdf';
+        
+        function openExportModal() {
+            exportPortfolio.value = state.portfolio;
+            exportModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeExportModal() {
+            exportModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        [exportBtn, mobileExportBtn].forEach(btn => btn?.addEventListener('click', openExportModal));
+        [closeModal, cancelExport].forEach(btn => btn?.addEventListener('click', closeExportModal));
+        exportModal?.addEventListener('click', (e) => { if (e.target === exportModal) closeExportModal(); });
+        
+        formatButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                formatButtons.forEach(b => {
+                    b.classList.remove('active', 'border-indigo-400', 'bg-indigo-500/10');
+                    b.classList.add('border-transparent', 'bg-zinc-900/30');
+                });
+                btn.classList.add('active', 'border-indigo-400', 'bg-indigo-500/10');
+                btn.classList.remove('border-transparent', 'bg-zinc-900/30');
+                selectedFormat = btn.dataset.format;
+            });
+        });
+        
+        confirmExport?.addEventListener('click', () => {
+            const portfolio = exportPortfolio.value;
+            const positions = state.positions[portfolio] || [];
+            
+            if (selectedFormat === 'csv') {
+                exportToCSV(positions, portfolio);
+            } else {
+                exportToPDF(positions, portfolio);
+            }
+            
+            closeExportModal();
+            showToast('Report generated successfully! ✓');
+        });
+        
+        function exportToCSV(positions, portfolio) {
+            const headers = ['Asset', 'Name', 'Quantity', 'Avg Cost', 'Live Price', 'Value', 'Today', 'Total G/L', 'Rating'];
+            const rows = positions.map(p => [p.asset, p.name, p.qty, `$${p.avgCost}`, `$${p.price}`, `$${p.value}`, p.today, p.totalGL, p.rating]);
+            const csvContent = [headers.join(','), ...rows.map(row => row.join(','))].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `trading-trip-${portfolio}-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+        
+        function exportToPDF(positions, portfolio) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.setTextColor(99, 102, 241);
+            doc.text(`Trading-Trip: ${portfolio.charAt(0).toUpperCase() + portfolio.slice(1)} Portfolio`, 14, 22);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+            
+            const metrics = { totalValue: 69148, change: 31.88 }; // Would fetch from state
+            doc.text(`Total Value: $${metrics.totalValue.toLocaleString()} (${metrics.change >= 0 ? '+' : ''}${metrics.change}%)`, 14, 36);
+            
+            const tableColumn = ['Asset', 'Qty', 'Price', 'Value', 'Today', 'G/L', 'Rating'];
+            const tableRows = positions.map(p => [p.asset, p.qty, `$${p.price}`, `$${p.value}`, p.today, p.totalGL, p.rating]);
+            
+            doc.autoTable({
+                startY: 45,
+                head: [tableColumn],
+                body: tableRows,
+                theme: 'grid',
+                styles: { fontSize: 9, cellPadding: 3 },
+                headStyles: { fillColor: [99, 102, 241], textColor: 255 },
+                alternateRowStyles: { fillColor: state.theme === 'dark' ? [30, 30, 35] : [245, 245, 245] }
+            });
+            
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text('Trading-Trip // Decentralized Experience Protocol', 14, doc.internal.pageSize.height - 10);
+                doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 35, doc.internal.pageSize.height - 10);
+            }
+            
+            doc.save(`trading-trip-${portfolio}-${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+
+        // ==================== TERMINAL COMMANDS ====================
+        const terminalInput = document.getElementById('terminalInput');
+        const terminalRun = document.getElementById('terminalRun');
+        
+        function executeCommand(cmd) {
+            logToTerminal(`> ${cmd}`, 'info');
+            
+            const commands = {
+                'help': () => logToTerminal('Available: status, sync, analyze, clear', 'info'),
+                'status': () => logToTerminal(`Portfolio: ${state.portfolio} | WS: ${state.ws?.readyState === 1 ? 'connected' : 'disconnected'} | Theme: ${state.theme}`, 'success'),
+                'sync': () => {
+                    logToTerminal('Syncing portfolio data...', 'info');
+                    if (state.ws?.readyState === WebSocket.OPEN) {
+                        state.ws.send(JSON.stringify({ type: 'request_sync', portfolio: state.portfolio }));
+                    }
+                },
+                'analyze': () => {
+                    logToTerminal('Running AI analysis...', 'info');
+                    fetchAIInsights();
+                },
+                'clear': () => { terminalOutput.innerHTML = ''; },
+                'theme': (arg) => {
+                    if (arg === 'dark' || arg === 'light') {
+                        state.theme = arg;
+                        localStorage.setItem('tt-theme', arg);
+                        applyTheme(arg);
+                        logToTerminal(`Theme set to ${arg}`, 'success');
+                    } else {
+                        logToTerminal('Usage: theme [dark|light]', 'warning');
+                    }
+                },
+                'portfolio': (arg) => {
+                    if (['personal', 'trust', 'ira'].includes(arg)) {
+                        state.portfolio = arg;
+                        renderPositionsTable(arg);
+                        logToTerminal(`Switched to ${arg} portfolio`, 'success');
+                    } else {
+                        logToTerminal('Usage: portfolio [personal|trust|ira]', 'warning');
+                    }
+                }
+            };
+            
+            const [cmdName, ...args] = cmd.trim().toLowerCase().split(' ');
+            if (commands[cmdName]) {
+                commands[cmdName](args.join(' '));
+            } else if (cmdName) {
+                logToTerminal(`✗ Unknown command: ${cmdName}. Type 'help' for options.`, 'error');
+            }
+        }
+        
+        terminalRun?.addEventListener('click', () => {
+            const cmd = terminalInput.value.trim();
+            if (cmd) {
+                executeCommand(cmd);
+                terminalInput.value = '';
+            }
+        });
+        
+        terminalInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = terminalInput.value.trim();
+                if (cmd) {
+                    executeCommand(cmd);
+                    terminalInput.value = '';
+                }
+            }
+        });
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-24 md:bottom-8 right-6 bg-emerald-500 text-white px-5 py-3 rounded-xl shadow-lg z-50 flex items-center gap-3 animate-slide-up';
+            toast.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span class="text-sm font-medium">${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(10px)'; setTimeout(() => toast.remove(), 200); }, 3000);
+        }
+        
+        // Update last sync time periodically
+        setInterval(() => {
+            document.getElementById('lastSync').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+        }, 30000);
+
+        // ==================== SERVICE WORKER REGISTRATION ====================
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+
+        // Initialize mobile nav visibility
+        if (window.innerWidth < 768) {
+            document.getElementById('mobileNav')?.classList.add('active');
+        }
+    </script>
+</body>
+</html>

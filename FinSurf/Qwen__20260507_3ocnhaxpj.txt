@@ -1,0 +1,5 @@
+Client → Backend: Request challenge
+Backend → Client: Return base64url challenge
+Client: navigator.credentials.get/create()
+Client → Backend: Send assertion/credential
+Backend: Verify signature & update session

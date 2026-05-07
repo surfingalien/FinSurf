@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trading-Trip | Operations Room</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js for Sparklines -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    
+    <!-- jsPDF for Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    animation: {
+                        'marquee': 'marquee 25s linear infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.3s ease-out'
+                    },
+                    keyframes: {
+                        marquee: {
+                            '0%': { transform: 'translateX(0)' },
+                            '100%': { transform: 'translateX(-50%)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        },
+                        glow: {
+                            '0%': { boxShadow: '0 0 5px rgba(129, 140, 248, 0.3), 0 0 20px rgba(129, 140, 248, 0.1)' },
+                            '100%': { boxShadow: '0 0 15px rgba(129, 140, 248, 0.6), 0 0 40px rgba(129, 140, 248, 0.2)' }
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' }
+                        }
+                    },
+                    colors: {
+                        dark: {
+                            bg: '#030304',
+                            card: 'rgba(15, 15, 20, 0.65)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                            text: '#f4f4f5',
+                            textMuted: '#a1a1aa'
+                        },
+                        light: {
+                            bg: '#fafafa',
+                            card: 'rgba(255, 255, 255, 0.85)',
+                            border: 'rgba(0, 0, 0, 0.08)',
+                            text: '#18181b',
+                            textMuted: '#71717a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            /* Dark Theme (Default) */
+            --bg-deep: #030304;
+            --bg-card: rgba(15, 15, 20, 0.65);
+            --bg-elevated: rgba(24, 24, 27, 0.9);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(129, 140, 248, 0.3);
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-primary: #818cf8;
+            --accent-secondary: #2dd4bf;
+            --accent-success: #34d399;
+            --accent-danger: #f87171;
+            --accent-warning: #fbbf24;
+            --shadow-glass: 
+                0 1px 0 rgba(255,255,255,0.05) inset,
+                0 8px 32px 0 rgba(0, 0, 0, 0.75),
+                0 0 0 1px rgba(129, 140, 248, 0.08);
+            --shadow-glass-hover: 
+                0 1px 0 rgba(255,255,255,0.08) inset,
+                0 12px 48px 0 rgba(0, 0, 0, 0.85),
+                0 0 0 1px rgba(129, 140, 248, 0.25),
+                0 0 30px rgba(129, 140, 248, 0.12);
+            --grid-color: rgba(255,255,255,0.03);
+            --grid-glow: rgba(129, 140, 248, 0.08);
+        }
+        
+        html.light {
+            --bg-deep: #fafafa;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-elevated: rgba(250, 250, 250, 0.95);
+            --border-subtle: rgba(0, 0, 0, 0.08);
+            --border-accent: rgba(99, 102, 241, 0.4);
+            --text-primary: #18181b;
+            --text-secondary: #71717a;
+            --text-muted: #a1a1aa;
+            --accent-primary: #6366f1;
+            --accent-secondary: #14b8a6;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --shadow-glass: 
+                0 1px 0 rgba(0,0,0,0.03) inset,
+                0 8px 32px 0 rgba(0, 0, 0, 0.08),
+                0 0 0 1px rgba(99, 102, 241, 0.1);
+            --shadow-glass-hover: 
+                0 1px 0 rgba(0,0,0,0.05) inset,
+                0 12px 48px 0 rgba(0, 0, 0, 0.12),
+                0 0 0 1px rgba(99, 102, 241, 0.35),
+                0 0 30px rgba(99, 102, 241, 0.15);
+            --grid-color: rgba(0,0,0,0.04);
+            --grid-glow: rgba(99, 102, 241, 0.12);
+        }
+        
+        * { 
+            scrollbar-width: thin; 
+            scrollbar-color: var(--accent-primary) transparent; 
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
+        }
+        *::-webkit-scrollbar { width: 6px; height: 6px; }
+        *::-webkit-scrollbar-track { background: transparent; }
+        *::-webkit-scrollbar-thumb { 
+            background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary)); 
+            border-radius: 3px; 
+            border: 1px solid var(--bg-deep);
+        }
+        
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background: var(--bg-deep); 
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        .mono { font-family: 'Fira Code', monospace; font-variant-numeric: tabular-nums; }
+        
+        /* Premium Glassmorphism */
+        .glass {
+            background: var(--bg-card);
+            backdrop-filter: blur(24px) saturate(200%) brightness(1.02);
+            border: 1px solid var(--border-subtle);
+            box-shadow: var(--shadow-glass);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass:hover {
+            border-color: var(--border-accent);
+            box-shadow: var(--shadow-glass-hover);
+        }
+        
+        .glass-accent {
+            border-left: 3px solid var(--accent-secondary);
+            box-shadow: 
+                0 1px 0 rgba(45, 212, 191, 0.15) inset,
+                0 8px 32px 0 rgba(0, 0, 0, 0.75),
+                0 0 20px rgba(45, 212, 191, 0.08);
+        }
+        html.light .glass-accent {
+            box-shadow: 
+                0 1px 0 rgba(20, 184, 166, 0.2) inset,
+                0 8px 32px 0 rgba(0, 0, 0, 0.08),
+                0 0 20px rgba(20, 184, 166, 0.1);
+        }
+        
+        /* Animated Map-Grid Background */
+        .bg-grid {
+            position: relative;
+            background: 
+                radial-gradient(ellipse at top, var(--grid-glow) 0%, transparent 60%),
+                radial-gradient(ellipse at bottom, rgba(45, 212, 191, 0.06) 0%, transparent 60%),
+                repeating-linear-gradient(0deg, transparent, transparent 39px, var(--grid-color) 40px),
+                repeating-linear-gradient(90deg, transparent, transparent 39px, var(--grid-color) 40px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+        
+        .bg-grid::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, var(--grid-glow) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(45, 212, 191, 0.1) 0%, transparent 45%);
+            pointer-events: none;
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        /* Terminal Scanline */
+        .scanline {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                180deg,
+                transparent 0%,
+                rgba(129, 140, 248, 0.03) 45%,
+                rgba(129, 140, 248, 0.08) 50%,
+                rgba(129, 140, 248, 0.03) 55%,
+                transparent 100%
+            );
+            animation: scan 5s linear infinite;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        @keyframes scan { 
+            0% { transform: translateY(-100%); } 
+            100% { transform: translateY(100%); } 
+        }
+        
+        /* Live Indicator Pulse */
+        .pulse-dot {
+            position: relative;
+        }
+        .pulse-dot::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: inherit;
+            animation: pulse-slow;
+            opacity: 0.6;
+        }
+        
+        /* Interactive Effects */
+        .hover-lift {
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s;
+        }
+        .hover-lift:hover {
+            transform: translateY(-4px);
+        }
+        
+        .hover-glow {
+            transition: all 0.3s ease;
+        }
+        .hover-glow:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 
+                0 0 0 1px rgba(129, 140, 248, 0.4),
+                0 0 25px rgba(129, 140, 248, 0.2);
+        }
+        
+        /* Coordinate Grid */
+        .coord-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 25px 25px;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        /* Metric Bars */
+        .metric-bar {
+            position: relative;
+            overflow: hidden;
+        }
+        .metric-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer { 100% { left: 100%; } }
+        
+        /* Status Badges */
+        .status-badge {
+            position: relative;
+            overflow: hidden;
+        }
+        .status-badge::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: translateX(-100%);
+            animation: sweep 3s infinite;
+        }
+        @keyframes sweep { 100% { transform: translateX(100%); } }
+        
+        /* Theme Toggle Animation */
+        .theme-toggle {
+            position: relative;
+            width: 52px;
+            height: 30px;
+            border-radius: 15px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-subtle);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .theme-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        html.light .theme-toggle::after {
+            transform: translateX(22px);
+            background: linear-gradient(135deg, #f59e0b, #fbbf24);
+        }
+        
+        /* Mobile Bottom Nav */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-elevated);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-subtle);
+            padding: 12px 20px 24px;
+            z-index: 100;
+            transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .mobile-nav.active {
+            transform: translateY(0);
+        }
+        
+        /* Export Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 480px;
+            width: 90%;
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        /* Chart Container */
+        .sparkline-container {
+            width: 80px;
+            height: 32px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .text-responsive-5xl { font-size: 2.5rem; line-height: 1; }
+            .text-responsive-3xl { font-size: 1.75rem; }
+            .hide-mobile { display: none; }
+            .show-mobile { display: flex; }
+        }
+        @media (min-width: 769px) {
+            .hide-desktop { display: none; }
+            .mobile-nav { display: none !important; }
+        }
+        
+        /* Print Styles for Export */
+        @media print {
+            body { background: white; color: black; }
+            .glass { background: white; border: 1px solid #ddd; box-shadow: none; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-grid">
+
+    <!-- Live Market Ticker -->
+    <div class="w-full bg-zinc-950/90 dark:bg-zinc-950/90 light:bg-white/90 border-b border-white/5 dark:border-white/5 light:border-black/5 py-2 overflow-hidden whitespace-nowrap backdrop-blur-sm sticky top-0 z-50">
+        <div class="flex animate-marquee gap-10 items-center text-[11px] mono uppercase tracking-wider">
+            <span class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
+                BTC: <span class="text-emerald-400 font-semibold">$64,102.40</span> <span class="text-emerald-400/80">+2.1%</span>
+            </span>
+            <span class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
+                ETH: <span class="text-emerald-400 font-semibold">$3,450.88</span> <span class="text-emerald-400/80">+1.4%</span>
+            </span>
+            <span class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-red-400 pulse-dot"></span>
+                SOL: <span class="text-red-400 font-semibold">$142.12</span> <span class="text-red-400/80">-0.8%</span>
+            </span>
+            <span class="flex items-center gap-2">
+                GOLD: <span class="text-zinc-300 dark:text-zinc-300 light:text-zinc-700 font-semibold">$2,342.10</span> <span class="text-zinc-400/80">+0.2%</span>
+            </span>
+            <span class="flex items-center gap-2">
+                NVDA: <span class="text-emerald-400 font-semibold">$202.06</span> <span class="text-emerald-400/80">+80.3%</span>
+            </span>
+            <span class="flex items-center gap-2">
+                TSM: <span class="text-emerald-400 font-semibold">$366.24</span> <span class="text-emerald-400/80">+102.9%</span>
+            </span>
+            <!-- Duplicate for seamless loop -->
+            <span class="flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
+                BTC: <span class="text-emerald-400 font-semibold">$64,102.40</span> <span class="text-emerald-400/80">+2.1%</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="px-6 md:px-10 py-5 flex justify-between items-center border-b border-white/5 dark:border-white/5 light:border-black/5 backdrop-blur-sm bg-zinc-950/30 dark:bg-zinc-950/30 light:bg-white/30 sticky top-[41px] z-40">
+        <div class="flex items-center gap-7">
+            <div class="flex items-center gap-3 group cursor-pointer">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-emerald-500/20 border border-white/10 flex items-center justify-center hover-glow">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </div>
+                <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">
+                    T-TRIP<span class="text-indigo-400/70">_OPS</span>
+                </h1>
+            </div>
+            <div class="hidden lg:flex h-5 w-px bg-gradient-to-b from-transparent via-zinc-700 to-transparent"></div>
+            <div class="hidden lg:flex gap-7 text-[11px] font-semibold uppercase tracking-[0.15em] text-zinc-500">
+                <a href="#" class="hover:text-indigo-400 transition-colors relative group">Tactical<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-400 transition-all group-hover:w-full"></span></a>
+                <a href="#" class="hover:text-indigo-400 transition-colors relative group">Manifest<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-400 transition-all group-hover:w-full"></span></a>
+                <a href="#" class="hover:text-indigo-400 transition-colors relative group">Archive<span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-400 transition-all group-hover:w-full"></span></a>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="hidden sm:flex flex-col items-end text-right">
+                <span class="text-[10px] mono text-zinc-500 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
+                    SESSION: <span class="text-emerald-400">SECURE</span>
+                </span>
+                <span class="text-xs font-semibold text-zinc-400 mono">LATENCY: 142ms</span>
+            </div>
+            
+            <!-- Theme Toggle -->
+            <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark/light mode" title="Toggle theme"></button>
+            
+            <button class="w-11 h-11 rounded-2xl border border-white/10 flex items-center justify-center glass hover-glow cursor-pointer transition-all active:scale-95">
+                <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-indigo-400 to-emerald-400 animate-pulse"></div>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-[1680px] mx-auto px-6 md:px-10 py-8 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 pb-24 md:pb-8">
+        
+        <!-- Left Column -->
+        <div class="lg:col-span-4 space-y-6">
+            
+            <!-- Live Terminal -->
+            <div class="glass rounded-3xl p-6 relative overflow-hidden h-[380px] flex flex-col hover-lift">
+                <div class="scanline"></div>
+                <div class="coord-grid"></div>
+                <div class="flex justify-between items-center mb-5 relative z-10">
+                    <span class="text-xs font-bold mono text-indigo-400 uppercase tracking-wide flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        System_Output
+                    </span>
+                    <span class="text-[10px] text-zinc-600 mono bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-2 py-1 rounded">v8.0.2</span>
+                </div>
+                <div id="terminalOutput" class="flex-1 mono text-[11px] text-indigo-300/85 dark:text-indigo-300/85 light:text-indigo-700/85 space-y-2.5 overflow-y-auto relative z-10 pr-2">
+                    <p class="text-zinc-500">[<span class="text-zinc-400">14:23:08</span>] Initializing secure bridge...</p>
+                    <p class="text-zinc-500">[<span class="text-zinc-400">14:23:09</span>] Syncing global portfolio data...</p>
+                    <p class="text-emerald-400">[<span class="text-zinc-400">14:23:11</span>] ✓ Connection established (142ms)</p>
+                    <p class="text-zinc-500">[<span class="text-zinc-400">14:23:12</span>] Tracking <span class="text-white font-semibold">22 positions</span> across 4 nodes...</p>
+                    <p class="text-zinc-500">[<span class="text-zinc-400">14:23:13</span>] Risk assessment: <span class="text-emerald-400 font-semibold">STABLE</span></p>
+                    <p class="text-zinc-600">[<span class="text-zinc-500">14:23:14</span>] Scanning Sector 7-G for anomalies...</p>
+                    <p class="text-amber-400/90">[<span class="text-zinc-400">14:23:15</span>] ⚠ COIN: -17.7% | Review position</p>
+                    <p class="text-emerald-400/90">[<span class="text-zinc-400">14:23:16</span>] ✓ AVGO: +125% | Target reached</p>
+                    <p class="animate-pulse text-indigo-400 mt-3">█</p>
+                </div>
+                <div class="mt-4 pt-4 border-t border-white/5 relative z-10">
+                    <div class="flex items-center gap-3">
+                        <span class="text-indigo-400 mono text-xs">></span>
+                        <input type="text" placeholder="Execute command..." class="flex-1 bg-transparent mono text-xs outline-none text-white dark:text-white light:text-zinc-900 placeholder-zinc-600 focus:placeholder-transparent transition-all">
+                        <button class="text-[10px] mono text-zinc-500 hover:text-indigo-400 transition-colors uppercase tracking-wide">Run</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Pulse -->
+            <div class="glass glass-accent rounded-3xl p-6 hover-lift">
+                <div class="flex justify-between items-start mb-5">
+                    <h3 class="text-xs font-bold uppercase tracking-tighter text-zinc-500 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        Portfolio Pulse
+                    </h3>
+                    <span class="text-[10px] mono text-zinc-600 bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-2 py-1 rounded">LIVE</span>
+                </div>
+                
+                <div class="space-y-5">
+                    <div>
+                        <p class="text-[10px] uppercase text-zinc-500 tracking-wider mb-1">Total Value</p>
+                        <div class="flex items-baseline gap-3">
+                            <span class="text-3xl md:text-4xl font-black tracking-tight">$69,148</span>
+                            <span class="text-emerald-400 text-sm font-bold flex items-center gap-1">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+                                </svg>
+                                +31.88%
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-zinc-900/40 dark:bg-zinc-900/40 light:bg-zinc-100/60 rounded-2xl p-4">
+                            <p class="text-[10px] text-zinc-500 uppercase mb-1">Today's P&L</p>
+                            <p class="text-lg font-bold text-red-400">-$221</p>
+                            <p class="text-[10px] text-zinc-600">-0.46% of cost</p>
+                        </div>
+                        <div class="bg-zinc-900/40 dark:bg-zinc-900/40 light:bg-zinc-100/60 rounded-2xl p-4">
+                            <p class="text-[10px] text-zinc-500 uppercase mb-1">Cash Reserve</p>
+                            <p class="text-lg font-bold text-white dark:text-white light:text-zinc-900">$5,050</p>
+                            <p class="text-[10px] text-zinc-600">7.3% allocation</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-[10px] text-zinc-500 mb-2">
+                            <span>Portfolio Health</span>
+                            <span class="text-emerald-400 font-semibold">87/100</span>
+                        </div>
+                        <div class="w-full h-2 bg-zinc-900 dark:bg-zinc-900 light:bg-zinc-200 rounded-full overflow-hidden metric-bar">
+                            <div class="h-full w-[87%] bg-gradient-to-r from-indigo-500 via-emerald-400 to-emerald-500 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fear & Gauge -->
+            <div class="glass rounded-3xl p-6 hover-lift">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-xs font-bold uppercase text-zinc-500">Market Sentiment</h4>
+                    <span class="text-[10px] mono text-zinc-600">Updated 2m ago</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative w-16 h-16">
+                        <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                            <path class="text-zinc-800 dark:text-zinc-800 light:text-zinc-200" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"/>
+                            <path class="text-amber-400" stroke-dasharray="47, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                        <span class="absolute inset-0 flex items-center justify-center text-sm font-bold">47</span>
+                    </div>
+                    <div>
+                        <p class="text-lg font-bold">Neutral</p>
+                        <p class="text-[11px] text-zinc-500">Fear & Greed Index</p>
+                        <div class="flex gap-1 mt-2">
+                            <span class="w-6 h-1.5 rounded-full bg-red-500/30"></span>
+                            <span class="w-6 h-1.5 rounded-full bg-amber-400"></span>
+                            <span class="w-6 h-1.5 rounded-full bg-emerald-500/30"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="lg:col-span-8 space-y-6 md:space-y-8">
+            
+            <!-- Top Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Geo-Financial Sync -->
+                <div class="glass rounded-3xl p-7 relative overflow-hidden group hover-lift">
+                    <div class="coord-grid opacity-40"></div>
+                    <div class="absolute -right-8 -top-8 w-32 h-32 bg-gradient-to-br from-indigo-500/10 to-emerald-500/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-5">
+                            <div class="w-12 h-12 bg-indigo-500/15 rounded-2xl flex items-center justify-center border border-indigo-500/20">
+                                <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <span class="text-[10px] mono text-zinc-500 uppercase bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-2.5 py-1 rounded">AUTO-SYNC</span>
+                        </div>
+                        
+                        <h2 class="text-xl font-bold mb-2">Geo-Financial Sync</h2>
+                        <p class="text-zinc-400 text-sm leading-relaxed">Automated trades triggered by timezone volatility patterns and regional news sentiment analysis.</p>
+                        
+                        <div class="mt-6 flex flex-wrap gap-2">
+                            <span class="text-[10px] mono text-zinc-500 bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-3 py-1.5 rounded-full">NYC</span>
+                            <span class="text-[10px] mono text-zinc-500 bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-3 py-1.5 rounded-full">LON</span>
+                            <span class="text-[10px] mono text-zinc-500 bg-zinc-900/50 dark:bg-zinc-900/50 light:bg-zinc-100 px-3 py-1.5 rounded-full">TKY</span>
+                            <span class="text-[10px] mono text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">ACTIVE</span>
+                        </div>
+                        
+                        <button class="mt-6 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-xl font-semibold text-sm w-fit hover:from-indigo-400 hover:to-indigo-500 transition-all hover:shadow-lg hover:shadow-indigo-500/25 active:scale-95">
+                            Configure Nodes →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Media Log -->
+                <div class="glass rounded-3xl p-7 flex flex-col justify-between hover-glow transition-all hover-lift">
+                    <div class="flex justify-between items-start">
+                        <div class="w-12 h-12 bg-emerald-500/15 rounded-2xl flex items-center justify-center border border-emerald-500/20">
+                            <svg class="text-emerald-400" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+                            </svg>
+                        </div>
+                        <span class="text-[10px] mono text-zinc-500 uppercase flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Live Feed
+                        </span>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h4 class="font-bold text-lg">Trip Visualizer</h4>
+                        <p class="text-zinc-400 text-sm mt-2 leading-relaxed">Real-time overlay of profit margins onto travel itineraries with predictive routing suggestions.</p>
+                    </div>
+                    
+                    <div class="mt-6 pt-5 border-t border-white/5">
+                        <div class="flex items-center justify-between text-[11px] mono">
+                            <span class="text-zinc-500">Last update</span>
+                            <span class="text-emerald-400">14:22:41 UTC</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wide Stats Panel -->
+            <div class="glass rounded-3xl p-7 md:p-9 flex flex-col md:flex-row gap-8 md:gap-12 items-center hover-lift">
+                <div class="text-center md:text-left min-w-[140px]">
+                    <p class="text-[10px] uppercase font-bold text-indigo-400 tracking-[0.15em] mb-2">Global Reach</p>
+                    <p class="text-4xl md:text-5xl font-black tracking-tight">14.2<span class="text-indigo-600/60">k</span></p>
+                    <p class="text-zinc-500 text-[11px] mt-2 uppercase tracking-wide">Trades Per Expedition</p>
+                </div>
+                <div class="hidden md:block h-16 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
+                <div class="text-center md:text-left min-w-[140px]">
+                    <p class="text-[10px] uppercase font-bold text-emerald-400 tracking-[0.15em] mb-2">Network Status</p>
+                    <p class="text-4xl md:text-5xl font-black tracking-tight">99.9<span class="text-emerald-600/60">%</span></p>
+                    <p class="text-zinc-500 text-[11px] mt-2 uppercase tracking-wide">Uptime Reliability</p>
+                </div>
+                <div class="hidden md:block h-16 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent"></div>
+                <div class="flex-1 text-center md:text-left">
+                    <p class="text-zinc-300 text-sm italic leading-relaxed">"The goal isn't just to trade; it's to build a life that markets pay for."</p>
+                    <p class="text-[10px] text-zinc-600 mt-2 mono">— Trading-Trip Philosophy</p>
+                </div>
+            </div>
+
+            <!-- Positions Table with Sparklines -->
+            <div class="glass rounded-3xl p-6 md:p-8 hover-lift">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <h3 class="text-lg font-bold flex items-center gap-3">
+                        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        Active Positions
+                    </h3>
+                    <div class="flex items-center gap-3">
+                        <span class="text-[11px] mono text-zinc-500">22 holdings</span>
+                        <button id="exportBtn" class="text-[11px] mono text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wide flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Export
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-[10px] uppercase text-zinc-500 tracking-wider border-b border-white/5">
+                                <th class="pb-4 font-semibold">Asset</th>
+                                <th class="pb-4 font-semibold text-right">Qty</th>
+                                <th class="pb-4 font-semibold text-right">Avg Cost</th>
+                                <th class="pb-4 font-semibold text-right">Live Price</th>
+                                <th class="pb-4 font-semibold text-right">Value</th>
+                                <th class="pb-4 font-semibold text-right">Today</th>
+                                <th class="pb-4 font-semibold text-right">7D Trend</th>
+                                <th class="pb-4 font-semibold text-center">Rating</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm">
+                            <tr class="border-b border-white/3 hover:bg-white/3 transition-colors">
+                                <td class="py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-400">NV</div>
+                                        <div>
+                                            <p class="font-semibold">NVDA</p>
+                                            <p class="text-[10px] text-zinc-500">NVIDIA Corp</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-right mono">50</td>
+                                <td class="py-4 text-right mono text-zinc-400">$112.07</td>
+                                <td class="py-4 text-right mono font-semibold">$202.06</td>
+                                <td class="py-4 text-right mono font-semibold">$10,103</td>
+                                <td class="py-4 text-right mono text-emerald-400">+0.18%</td>
+                                <td class="py-4 text-right">
+                                    <canvas id="spark-nvda" class="sparkline-container"></canvas>
+                                </td>
+                                <td class="py-4 text-center">
+                                    <span class="status-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                        Strong Buy
+                                    </span>
+                                </td>
+                            </tr>
+                            
+                            <tr class="border-b border-white/3 hover:bg-white/3 transition-colors">
+                                <td class="py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-cyan-500/20 border border-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">TS</div>
+                                        <div>
+                                            <p class="font-semibold">TSM</p>
+                                            <p class="text-[10px] text-zinc-500">TSMC</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-right mono">20</td>
+                                <td class="py-4 text-right mono text-zinc-400">$180.51</td>
+                                <td class="py-4 text-right mono font-semibold">$366.24</td>
+                                <td class="py-4 text-right mono font-semibold">$7,325</td>
+                                <td class="py-4 text-right mono text-red-400">-1.15%</td>
+                                <td class="py-4 text-right">
+                                    <canvas id="spark-tsm" class="sparkline-container"></canvas>
+                                </td>
+                                <td class="py-4 text-center">
+                                    <span class="status-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                        Strong Buy
+                                    </span>
+                                </td>
+                            </tr>
+                            
+                            <tr class="border-b border-white/3 hover:bg-white/3 transition-colors">
+                                <td class="py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500/20 to-pink-500/20 border border-red-500/20 flex items-center justify-center text-xs font-bold text-red-400">TS</div>
+                                        <div>
+                                            <p class="font-semibold">TSLA</p>
+                                            <p class="text-[10px] text-zinc-500">Tesla Inc</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-right mono">15</td>
+                                <td class="py-4 text-right mono text-zinc-400">$216.75</td>
+                                <td class="py-4 text-right mono font-semibold">$392.50</td>
+                                <td class="py-4 text-right mono font-semibold">$5,888</td>
+                                <td class="py-4 text-right mono text-red-400">-2.03%</td>
+                                <td class="py-4 text-right">
+                                    <canvas id="spark-tsla" class="sparkline-container"></canvas>
+                                </td>
+                                <td class="py-4 text-center">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-zinc-700/30 text-zinc-300 border border-zinc-600/30">Hold</span>
+                                </td>
+                            </tr>
+                            
+                            <tr class="border-b border-white/3 hover:bg-red-500/5 transition-colors">
+                                <td class="py-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500/20 to-pink-500/20 border border-rose-500/20 flex items-center justify-center text-xs font-bold text-rose-400">CB</div>
+                                        <div>
+                                            <p class="font-semibold">COIN</p>
+                                            <p class="text-[10px] text-zinc-500">Coinbase</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-right mono">15</td>
+                                <td class="py-4 text-right mono text-zinc-400">$257.11</td>
+                                <td class="py-4 text-right mono font-semibold">$211.63</td>
+                                <td class="py-4 text-right mono font-semibold">$3,174</td>
+                                <td class="py-4 text-right mono text-emerald-400">+2.56%</td>
+                                <td class="py-4 text-right">
+                                    <canvas id="spark-coin" class="sparkline-container"></canvas>
+                                </td>
+                                <td class="py-4 text-center">
+                                    <span class="status-badge inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-red-500/10 text-red-400 border border-red-500/20">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
+                                        Review
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="mt-6 pt-5 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4 text-[11px] text-zinc-500">
+                    <p>Showing top 4 of 22 positions • <button class="text-indigo-400 hover:text-indigo-300 transition-colors">Expand view</button></p>
+                    <p class="mono">Last sync: <span class="text-zinc-300">14:23:18 UTC</span></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="px-6 md:px-10 py-8 mt-8 border-t border-white/5">
+        <div class="max-w-[1680px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-[10px] mono text-zinc-600 uppercase tracking-[0.3em]">Trading-Trip // Decentralized Experience Protocol</p>
+            <div class="flex items-center gap-6 text-[10px] mono text-zinc-600">
+                <span class="flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 pulse-dot"></span>
+                    Systems Operational
+                </span>
+                <span>© 2026</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-nav show-mobile" id="mobileNav">
+        <div class="max-w-lg mx-auto flex justify-around items-center">
+            <a href="#" class="flex flex-col items-center gap-1 text-indigo-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span class="text-[10px] font-medium">Home</span>
+            </a>
+            <a href="#" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-indigo-400 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <span class="text-[10px] font-medium">Portfolio</span>
+            </a>
+            <button id="mobileExportBtn" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-indigo-400 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                <span class="text-[10px] font-medium">Export</span>
+            </button>
+            <a href="#" class="flex flex-col items-center gap-1 text-zinc-500 hover:text-indigo-400 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="text-[10px] font-medium">Settings</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-content glass">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-lg font-bold">Export Positions Report</h3>
+                <button id="closeModal" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[11px] uppercase text-zinc-500 tracking-wide mb-2">Export Format</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button class="export-format active p-4 rounded-xl border-2 border-indigo-400 bg-indigo-500/10 text-left hover:bg-indigo-500/20 transition-colors" data-format="pdf">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-red-500/20 flex items-center justify-center">
+                                    <span class="text-red-400 font-bold text-xs">PDF</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-sm">PDF Report</p>
+                                    <p class="text-[10px] text-zinc-500">Printable format</p>
+                                </div>
+                            </div>
+                        </button>
+                        <button class="export-format p-4 rounded-xl border-2 border-transparent bg-zinc-900/30 text-left hover:border-zinc-600 transition-colors" data-format="csv">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                                    <span class="text-emerald-400 font-bold text-xs">CSV</span>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-sm">CSV Data</p>
+                                    <p class="text-[10px] text-zinc-500">For spreadsheets</p>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-[11px] uppercase text-zinc-500 tracking-wide mb-2">Date Range</label>
+                    <select class="w-full bg-zinc-900/50 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:border-indigo-400 transition-colors">
+                        <option>Today</option>
+                        <option selected>This Week</option>
+                        <option>This Month</option>
+                        <option>All Time</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center gap-3 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                    <svg class="w-5 h-5 text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <p class="text-[11px] text-zinc-400">Export includes all 22 positions with current valuations, P&L, and performance metrics.</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mt-6">
+                <button id="cancelExport" class="flex-1 py-3 rounded-xl border border-white/10 font-semibold hover:bg-white/5 transition-colors">Cancel</button>
+                <button id="confirmExport" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold hover:from-indigo-400 hover:to-indigo-500 transition-all">Generate Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Particles -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+        <div class="absolute top-1/4 left-1/4 w-1 h-1 bg-indigo-400/30 rounded-full animate-float" style="animation-delay: 0s"></div>
+        <div class="absolute top-3/4 left-1/3 w-1.5 h-1.5 bg-emerald-400/25 rounded-full animate-float" style="animation-delay: -2s"></div>
+        <div class="absolute top-1/2 right-1/4 w-1 h-1 bg-indigo-400/20 rounded-full animate-float" style="animation-delay: -4s"></div>
+    </div>
+
+    <script>
+        // ==================== THEME TOGGLE ====================
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        
+        // Check for saved theme preference or respect OS preference
+        const savedTheme = localStorage.getItem('tt-theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        if (savedTheme === 'light' || (!savedTheme && !prefersDark)) {
+            html.classList.remove('dark');
+            html.classList.add('light');
+        }
+        
+        themeToggle.addEventListener('click', () => {
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                html.classList.add('light');
+                localStorage.setItem('tt-theme', 'light');
+            } else {
+                html.classList.remove('light');
+                html.classList.add('dark');
+                localStorage.setItem('tt-theme', 'dark');
+            }
+            // Re-render charts with new theme
+            renderSparklines();
+        });
+        
+        // ==================== CHART.JS SPARKLINES ====================
+        const sparklineData = {
+            nvda: [112, 125, 138, 155, 172, 185, 198, 202],
+            tsm: [180, 195, 210, 245, 280, 320, 345, 366],
+            tsla: [216, 225, 240, 265, 310, 355, 380, 392],
+            coin: [257, 245, 230, 215, 205, 198, 208, 211]
+        };
+        
+        const charts = {};
+        
+        function getChartColors() {
+            const isDark = html.classList.contains('dark');
+            return {
+                grid: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                text: isDark ? '#a1a1aa' : '#71717a',
+                line: isDark ? '#818cf8' : '#6366f1',
+                fill: isDark ? 'rgba(129, 140, 248, 0.1)' : 'rgba(99, 102, 241, 0.1)'
+            };
+        }
+        
+        function createSparkline(canvasId, data, isPositive) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const colors = getChartColors();
+            
+            // Destroy existing chart if any
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+            
+            charts[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map((_, i) => i),
+                    datasets: [{
+                        data: data,
+                        borderColor: isPositive ? colors.line : '#f87171',
+                        backgroundColor: isPositive ? colors.fill : 'rgba(248, 113, 113, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { display: false, grid: { display: false } },
+                        y: { 
+                            display: false, 
+                            grid: { display: false, color: colors.grid },
+                            min: Math.min(...data) * 0.95,
+                            max: Math.max(...data) * 1.05
+                        }
+                    },
+                    interaction: { mode: 'none' }
+                }
+            });
+        }
+        
+        function renderSparklines() {
+            createSparkline('spark-nvda', sparklineData.nvda, true);
+            createSparkline('spark-tsm', sparklineData.tsm, true);
+            createSparkline('spark-tsla', sparklineData.tsla, true);
+            createSparkline('spark-coin', sparklineData.coin, false);
+        }
+        
+        // Initialize charts after DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSparklines();
+            
+            // Re-render on resize for responsiveness
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(renderSparklines, 150);
+            });
+        });
+        
+        // ==================== EXPORT FUNCTIONALITY ====================
+        const exportBtn = document.getElementById('exportBtn');
+        const mobileExportBtn = document.getElementById('mobileExportBtn');
+        const exportModal = document.getElementById('exportModal');
+        const closeModal = document.getElementById('closeModal');
+        const cancelExport = document.getElementById('cancelExport');
+        const confirmExport = document.getElementById('confirmExport');
+        const formatButtons = document.querySelectorAll('.export-format');
+        
+        let selectedFormat = 'pdf';
+        
+        // Open modal
+        function openExportModal() {
+            exportModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Close modal
+        function closeExportModal() {
+            exportModal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // Event listeners
+        [exportBtn, mobileExportBtn].forEach(btn => {
+            btn?.addEventListener('click', openExportModal);
+        });
+        [closeModal, cancelExport].forEach(btn => {
+            btn?.addEventListener('click', closeExportModal);
+        });
+        
+        // Close on overlay click
+        exportModal?.addEventListener('click', (e) => {
+            if (e.target === exportModal) closeExportModal();
+        });
+        
+        // Format selection
+        formatButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                formatButtons.forEach(b => {
+                    b.classList.remove('active', 'border-indigo-400', 'bg-indigo-500/10');
+                    b.classList.add('border-transparent', 'bg-zinc-900/30');
+                });
+                btn.classList.add('active', 'border-indigo-400', 'bg-indigo-500/10');
+                btn.classList.remove('border-transparent', 'bg-zinc-900/30');
+                selectedFormat = btn.dataset.format;
+            });
+        });
+        
+        // Generate export
+        confirmExport?.addEventListener('click', () => {
+            const positions = [
+                { asset: 'NVDA', name: 'NVIDIA Corp', qty: 50, avgCost: 112.07, price: 202.06, value: 10103, today: '+0.18%', totalGL: '+$4,500', rating: 'Strong Buy' },
+                { asset: 'TSM', name: 'TSMC', qty: 20, avgCost: 180.51, price: 366.24, value: 7325, today: '-1.15%', totalGL: '+$3,715', rating: 'Strong Buy' },
+                { asset: 'TSLA', name: 'Tesla Inc', qty: 15, avgCost: 216.75, price: 392.50, value: 5888, today: '-2.03%', totalGL: '+$2,636', rating: 'Hold' },
+                { asset: 'COIN', name: 'Coinbase', qty: 15, avgCost: 257.11, price: 211.63, value: 3174, today: '+2.56%', totalGL: '-$682', rating: 'Review' }
+            ];
+            
+            if (selectedFormat === 'csv') {
+                exportToCSV(positions);
+            } else {
+                exportToPDF(positions);
+            }
+            
+            closeExportModal();
+            
+            // Show success toast
+            showToast('Report generated successfully! ✓');
+        });
+        
+        // CSV Export
+        function exportToCSV(positions) {
+            const headers = ['Asset', 'Name', 'Quantity', 'Avg Cost', 'Live Price', 'Value', 'Today', 'Total G/L', 'Rating'];
+            const rows = positions.map(p => [
+                p.asset, p.name, p.qty, `$${p.avgCost}`, `$${p.price}`, 
+                `$${p.value}`, p.today, p.totalGL, p.rating
+            ]);
+            
+            const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `trading-trip-positions-${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+        
+        // PDF Export using jsPDF
+        function exportToPDF(positions) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Header
+            doc.setFontSize(18);
+            doc.setTextColor(99, 102, 241);
+            doc.text('Trading-Trip Operations Report', 14, 22);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+            doc.text(`Total Portfolio Value: $69,148 (+31.88%)`, 14, 36);
+            
+            // Table
+            const tableColumn = ['Asset', 'Qty', 'Price', 'Value', 'Today', 'G/L', 'Rating'];
+            const tableRows = positions.map(p => [
+                p.asset, p.qty, `$${p.price}`, `$${p.value}`, 
+                p.today, p.totalGL, p.rating
+            ]);
+            
+            doc.autoTable({
+                startY: 45,
+                head: [tableColumn],
+                body: tableRows,
+                theme: 'grid',
+                styles: { fontSize: 9, cellPadding: 3 },
+                headStyles: { fillColor: [99, 102, 241], textColor: 255 },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                columnStyles: {
+                    4: { cellWidth: 25 }, // Today column
+                    5: { cellWidth: 25 }  // G/L column
+                }
+            });
+            
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(150);
+                doc.text('Trading-Trip // Decentralized Experience Protocol', 14, doc.internal.pageSize.height - 10);
+                doc.text(`Page ${i} of ${pageCount}`, doc.internal.pageSize.width - 35, doc.internal.pageSize.height - 10);
+            }
+            
+            doc.save(`trading-trip-report-${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+        
+        // Toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-24 md:bottom-8 right-6 bg-emerald-500 text-white px-5 py-3 rounded-xl shadow-lg z-50 flex items-center gap-3 animate-slide-up';
+            toast.innerHTML = `
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="text-sm font-medium">${message}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                setTimeout(() => toast.remove(), 200);
+            }, 3000);
+        }
+        
+        // ==================== TERMINAL AUTO-SCROLL ====================
+        const terminal = document.getElementById('terminalOutput');
+        if (terminal) {
+            // Auto-scroll to bottom
+            terminal.scrollTop = terminal.scrollHeight;
+            
+            // Simulate new log entries
+            const newEntries = [
+                { time: '14:24:01', text: 'Analyzing correlation matrices...', color: 'text-zinc-500' },
+                { time: '14:24:03', text: '✓ Pattern detected in tech sector', color: 'text-emerald-400' },
+                { time: '14:24:05', text: 'Rebalancing suggestions ready', color: 'text-indigo-400' }
+            ];
+            
+            let entryIndex = 0;
+            const interval = setInterval(() => {
+                if (entryIndex < newEntries.length && terminal) {
+                    const entry = newEntries[entryIndex];
+                    const p = document.createElement('p');
+                    p.className = `${entry.color} mono text-[11px]`;
+                    p.innerHTML = `[<span class="text-zinc-400">${entry.time}</span>] ${entry.text}`;
+                    terminal.appendChild(p);
+                    terminal.scrollTop = terminal.scrollHeight;
+                    entryIndex++;
+                } else {
+                    clearInterval(interval);
+                }
+            }, 5000);
+        }
+        
+        // ==================== MOBILE NAV SCROLL HIDE ====================
+        let lastScrollY = window.scrollY;
+        const mobileNav = document.getElementById('mobileNav');
+        
+        window.addEventListener('scroll', () => {
+            if (window.innerWidth < 768) {
+                if (window.scrollY > lastScrollY && window.scrollY > 100) {
+                    mobileNav?.classList.remove('active');
+                } else {
+                    mobileNav?.classList.add('active');
+                }
+                lastScrollY = window.scrollY;
+            }
+        });
+        
+        // Initialize mobile nav visibility
+        if (window.innerWidth < 768) {
+            mobileNav?.classList.add('active');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+trading-trip/
+├── index.html          # Main app (enhanced)
+├── manifest.json       # PWA manifest
+├── sw.js              # Service worker
+├── server.js          # WebSocket server example (Node.js)
+├── webauthn.js        # Biometric auth helpers
+└── README.md          # Setup instructions

@@ -1,0 +1,5 @@
+/* In :root and html.light blocks */
+--accent-primary: #your-color;  /* Main brand */
+--accent-secondary: #your-color; /* Secondary accent */
+--accent-success: #your-color;   /* Gains */
+--accent-danger: #your-color;    /* Losses */
